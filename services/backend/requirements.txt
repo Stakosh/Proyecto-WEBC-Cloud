@@ -12,3 +12,4 @@ PyJWT==2.6.0
 bcrypt==3.2.0
 Werkzeug==2.1.1
 psycopg2-binary==2.9.3
+flask_restx==0.5.1

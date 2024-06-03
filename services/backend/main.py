@@ -138,7 +138,7 @@ def initialize_default_user():
 
 if __name__ == "__main__":
     with app.app_context():
-        time.sleep(8)
+        time.sleep(12)
         db.create_all()
         initialize_default_user()
         app.run(debug=True, host='0.0.0.0')
