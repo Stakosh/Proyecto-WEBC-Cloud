@@ -1,15 +1,15 @@
-version: '3.8'
+
 
 services:
   backend:
     build:
       context: ./services/backend
       dockerfile: Dockerfile
-    entrypoint: ["sh", "/app/entrypoint.sh"] # Ajustado
+    entrypoint: ["sh", "/app/entrypoint.sh"] # se asegura de ejecutar el .sh que verifica que se ejecute la base de datos 
     volumes:
       - "./services/backend:/app"
     ports:
-      - "5004:5000"
+      - "5000:5000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/app_dev
       - FLASK_ENV=development
@@ -23,7 +23,7 @@ services:
       context: ./services/db
       dockerfile: Dockerfile
     ports:
-      - "5432"
+      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

@@ -13,8 +13,32 @@ while ! nc -z db 5432; do
   sleep 0.3
 done
 echo "---------------"
-echo "PostgreSQL iniciado"
-echo "---------------"
+
+echo "═══•◉•═════
+
+▂▄▄▓▄▄▂
+
+◢◤ █▀▀████▄▄▄▄◢◤
+
+█▄ █ █▄ ███▀▀▀▀▀▀▀╬
+
+◥█████◤
+
+═╩══╩═
+
+╬═╬
+
+╬═╬
+
+╬═╬ 
+
+╬═╬ PostgreSQL iniciado
+
+╬═╬ ●/
+
+╬═╬/▌
+
+╬═╬/ \ "
 
 # Ejecutar el script Python
 echo "---------------"

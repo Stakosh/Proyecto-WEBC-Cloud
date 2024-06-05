@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from flask_restx import Api, Resource, Namespace, fields
 from flask import request, jsonify, Flask
+from app2.config import DevelopmentConfig
+
 from flask.cli import FlaskGroup
 from flask_cors import CORS
 
@@ -14,6 +16,7 @@ import os
 import time
 
 app = Flask(__name__)
+app.config.from_object(DevelopmentConfig)
 
 # Inicializa la extensión de base de datos
 db.init_app(app)
@@ -184,18 +187,46 @@ api.add_namespace(student_ns, path='/api')
 ################## FIN RUTAS ############################
 
 # creacion usuario para testing
-def initialize_default_user():
+def initialize_default_users():
     if not CREDENCIAL.query.first():
-        hashed_password = bcrypt.hashpw('queso'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        default_user = CREDENCIAL(
-            student_id='20.723.182-7',
-            first_name='Javiera',
-            last_name='Soto',
-            email='queso@queso.cl',
-            password=hashed_password,
-            tipo_acceso='alumno'
-        )
-        db.session.add(default_user)
+        users = [
+            {
+                'student_id': '20.723.182-7',
+                'first_name': 'Javiera',
+                'last_name': 'Soto',
+                'email': 'javi@correo.cl',
+                'password': 'queso',
+                'tipo_acceso': 'alumno'
+            },
+            {
+                'student_id': '19.654.321-0',
+                'first_name': 'Nachito',
+                'last_name': 'Zuñiga',
+                'email': 'nachito@correo.cl',
+                'password': 'Nachito',
+                'tipo_acceso': 'admin'
+            },
+            {
+                'student_id': '18.123.456-7',
+                'first_name': 'Cony',
+                'last_name': 'Contreras',
+                'email': 'cony@correo.cl',
+                'password': 'Cony',
+                'tipo_acceso': 'admin'
+            }
+        ]
+
+        for user_data in users:
+            hashed_password = bcrypt.hashpw(user_data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            user = CREDENCIAL(
+                student_id=user_data['student_id'],
+                first_name=user_data['first_name'],
+                last_name=user_data['last_name'],
+                email=user_data['email'],
+                password=hashed_password,
+                tipo_acceso=user_data['tipo_acceso']
+            )
+            db.session.add(user)
         db.session.commit()
 
 # Setup CORS
@@ -210,5 +241,5 @@ if __name__ == "__main__":
     with app.app_context():
         time.sleep(12)  # Asegúrate de que la base de datos esté lista
         db.create_all()
-        initialize_default_user()
+        initialize_default_users() #crea a los 3 usuarios por default 
         app.run(debug=True, host='0.0.0.0')
