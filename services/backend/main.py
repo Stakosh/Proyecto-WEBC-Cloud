@@ -180,6 +180,17 @@ class SearchStudent(Resource):
             "email": student.email,
             "tipo_acceso": student.tipo_acceso
         }, 200
+    
+
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    name = data.get('name')
+    rut = data.get('rut')
+    new_password = data.get('newPassword')
+
+    if not name or not rut or not new_password:
+        return jsonify    
 
 # Agregar el namespace a la API
 api.add_namespace(student_ns, path='/api')

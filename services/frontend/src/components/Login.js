@@ -4,10 +4,12 @@ import { Container, Button, Row, Col, Form } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import ImgFondo from '../img/fondo-1.jpg';  // Ensure the image path is correct
 import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 function Login() {
     const navigate = useNavigate();
     const { t } = useTranslation("global");
+    const { login } = useAuth();
     const [formData, setFormData] = useState({ email: '', password: '' });
 
     const handleChange = (event) => {
@@ -18,11 +20,14 @@ function Login() {
     const handleFormSubmit = async (event) => {
         event.preventDefault();
         try {
-            const response = await axios.post('http://127.0.0.1:5004/api/login', formData);
+            const response = await axios.post('http://localhost:5000/api/login', formData);
             console.log('Login successful:', response.data);
             
             // Save the token (if needed)
             localStorage.setItem('token', response.data.token);
+
+            // Update authentication state
+            login();
 
             // Navigate to the 'inicio' route if credentials match
             navigate('/inicio');
