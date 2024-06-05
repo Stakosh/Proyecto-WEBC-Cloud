@@ -1,10 +1,5 @@
-# models.py
-
-from config import app
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.types import Enum
-
-db = SQLAlchemy(app)
+from extensions import db
 
 class CREDENCIAL(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -25,4 +20,3 @@ class CREDENCIAL(db.Model):
             "password": self.password,
             "tipo_acceso": self.tipo_acceso
         }
-

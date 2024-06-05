@@ -1,21 +1,62 @@
-################ importacion librerias #####################
-import time
-import bcrypt
-import jwt
 from datetime import datetime, timedelta
-from models import db
-from config import app
-from flask import request, jsonify
-from models import CREDENCIAL
+from flask_restx import Api, Resource, Namespace, fields
+from flask import request, jsonify, Flask
+from flask.cli import FlaskGroup
 from flask_cors import CORS
 
-CORS(app)
+
+from extensions import db
+from models import CREDENCIAL
+
+import bcrypt
+import jwt
+import os
+import time
+
+app = Flask(__name__)
+
+# Inicializa la extensión de base de datos
+db.init_app(app)
+
+# Configuración de CORS
+CORS(app, resources={r"/api/*": {
+    "origins": ["http://localhost:3000"],
+    "methods": ["GET", "POST", "PATCH", "DELETE"],
+    "allow_headers": ["Authorization", "Content-Type"],
+    "supports_credentials": True,
+    "max_age": 3600
+}})
 
 
-################ generacion token #####################
+# Configuración de la API
+api = Api(app, version="1.0", title="APIs", doc="/docs/")
+
+
+
+
+
+# Namespace para operaciones relacionadas con alumnos
+student_ns = Namespace('students', description='Operaciones relacionadas con alumnos')
+
+# Modelo para creación y actualización de alumnos
+student_model = student_ns.model('Student', {
+    'student_id': fields.String(required=True, description='ID del estudiante'),
+    'first_name': fields.String(required=True, description='Nombre del estudiante'),
+    'last_name': fields.String(required=True, description='Apellido del estudiante'),
+    'email': fields.String(required=True, description='Correo electrónico del estudiante'),
+    'password': fields.String(required=True, description='Contraseña del estudiante'),
+    'tipo_acceso': fields.String(required=True, description='Tipo de acceso (admin, profesor, alumno)'),
+})
+
+
+
+
+
+
+# Generación y verificación de tokens JWT
 def generate_token(user_id):
     payload = {
-        'exp': datetime.utcnow() + timedelta(days=1),  # Token expira en 1 día
+        'exp': datetime.utcnow() + timedelta(days=1),
         'iat': datetime.utcnow(),
         'sub': user_id
     }
@@ -36,91 +77,113 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     decorator.__name__ = f.__name__
     return decorator
-################ fin generacion token #####################
 
 
 
 
+################## RUTAS ############################
+# para login de un alumno
+@student_ns.route('/login')
+class LoginStudent(Resource):
+    def post(self):
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
 
-################ RUTAS #####################
-@app.route("/users", methods=["GET"])
-@token_required
-def get_university_credentials(current_user):
-    alumnos = CREDENCIAL.query.all()
-    json_alumnos = list(map(lambda x: x.to_json(), alumnos))
-    return jsonify({"alumnos": json_alumnos}), 200
+        if not email or not password:
+            return {"error": "Email and password are required"}, 400
 
-@app.route("/", methods=["POST"])
-def login():
-    email = request.json.get("email")
-    password = request.json.get("password")
+        student = CREDENCIAL.query.filter_by(email=email).first()
 
-    if not email or not password:
-        return jsonify({"message": "Por favor, rellene todos los campos"}), 400
+        if not student or not bcrypt.checkpw(password.encode('utf-8'), student.password.encode('utf-8')):
+            return {"error": "Invalid credentials"}, 401
 
-    alumno = CREDENCIAL.query.filter_by(email=email).first()
+        token = generate_token(student.id)
+        return {"token": token, "message": "Login successful"}, 200
 
-    if alumno and bcrypt.checkpw(password.encode('utf-8'), alumno.password.encode('utf-8')):
-        token = generate_token(alumno.id)
-        return jsonify({"message": "Inicio de sesión exitoso", "token": token}), 200
-    else:
-        return jsonify({"message": "Credenciales inválidas"}), 401
+# para crear un nuevo alumno
+@student_ns.route('/creacion-nuevo-alumno')
+class CreateStudent(Resource):
+    @student_ns.expect(student_model)
+    def post(self):
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
 
-@app.route("/create_contact", methods=["POST"])
-@token_required
-def create_CREDENCIAL(current_user):
-    student_id = request.json.get("studentId")
-    first_name = request.json.get("firstName")
-    last_name = request.json.get("lastName")
-    email = request.json.get("email")
-    password = request.json.get("password")
-    tipo_acceso = request.json.get("tipoAcceso")
+        if not email or not password:
+            return {"error": "Email and password are required"}, 400
 
-    if not student_id or not first_name or not last_name or not email or not password or not tipo_acceso:
-        return jsonify({"message": "Rellenar todos los campos, por favor"}), 400
+        if CREDENCIAL.query.filter_by(email=email).first():
+            return {"error": "User already exists"}, 409
 
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    new_alumno = CREDENCIAL(
-        student_id=student_id, 
-        first_name=first_name, 
-        last_name=last_name, 
-        email=email, 
-        password=hashed_password,
-        tipo_acceso=tipo_acceso
-    )
-
-    try:
-        db.session.add(new_alumno)
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        new_student = CREDENCIAL(
+            student_id=data.get('student_id'),
+            first_name=data.get('first_name'),
+            last_name=data.get('last_name'),
+            email=email,
+            password=hashed_password,
+            tipo_acceso=data.get('tipo_acceso')
+        )
+        db.session.add(new_student)
         db.session.commit()
-    except Exception as e:
-        return jsonify({"message": str(e)}), 400
 
-    return jsonify({"message": "Usuario creado exitosamente"}), 201
+        return {"message": "User registered successfully"}, 201
 
-@app.route("/update_contact/<int:user_id>", methods=["PATCH"])
-@token_required
-def update_CREDENCIAL(current_user, user_id):
-    alumno = CREDENCIAL.query.get(user_id)
+# Resource para editar un alumno
+@student_ns.route('/editar-alumno/<int:user_id>')
+class EditStudent(Resource):
+    @student_ns.expect(student_model)
+    def patch(self, user_id):
+        student = CREDENCIAL.query.get(user_id)
+        if not student:
+            return {"message": "User not found"}, 400
+        
+        data = request.json
+        student.student_id = data.get("student_id", student.student_id)
+        student.first_name = data.get("first_name", student.first_name)
+        student.last_name = data.get("last_name", student.last_name)
+        student.email = data.get("email", student.email)
+        student.password = data.get("password", student.password)
+        student.tipo_acceso = data.get("tipo_acceso", student.tipo_acceso)
 
-    if not alumno:
-        return jsonify({"message": "Usuario no encontrado"}), 404
+        db.session.commit()
+        return {"message": "User updated successfully"}, 200
 
-    data = request.json
-    alumno.student_id = data.get("studentId", alumno.student_id)
-    alumno.first_name = data.get("firstName", alumno.first_name)
-    alumno.last_name = data.get("lastName", alumno.last_name)
-    alumno.email = data.get("email", alumno.email)
-    if "password" in data:
-        alumno.password = bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    if "tipoAcceso" in data:
-        alumno.tipo_acceso = data["tipoAcceso"]
+# Resource para eliminar un alumno
+@student_ns.route('/eliminar-alumno/<int:user_id>')
+class DeleteStudent(Resource):
+    def delete(self, user_id):
+        student = CREDENCIAL.query.get(user_id)
+        if not student:
+            return {"message": "User not found"}, 400
+        
+        db.session.delete(student)
+        db.session.commit()
+        return {"message": "User deleted successfully"}, 200
 
-    db.session.commit()
+# Resource para buscar un alumno
+@student_ns.route('/buscar-alumno/<int:user_id>')
+class SearchStudent(Resource):
+    def get(self, user_id):
+        student = CREDENCIAL.query.get(user_id)
+        if not student:
+            return {"message": "User not found"}, 400
+        
+        return {
+            "student_id": student.student_id,
+            "first_name": student.first_name,
+            "last_name": student.last_name,
+            "email": student.email,
+            "tipo_acceso": student.tipo_acceso
+        }, 200
 
-    return jsonify({"message": "Usuario modificado exitosamente"}), 200
+# Agregar el namespace a la API
+api.add_namespace(student_ns, path='/api')
 
-################ FIN RUTAS #####################
+################## FIN RUTAS ############################
 
+# creacion usuario para testing
 def initialize_default_user():
     if not CREDENCIAL.query.first():
         hashed_password = bcrypt.hashpw('queso'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -130,15 +193,22 @@ def initialize_default_user():
             last_name='Soto',
             email='queso@queso.cl',
             password=hashed_password,
-            tipo_acceso='admin'
+            tipo_acceso='alumno'
         )
         db.session.add(default_user)
         db.session.commit()
-        print("Usuario por defecto creado.")
+
+# Setup CORS
+CORS(app)
+
+# Create the database and tables if they don't exist
+time.sleep(10)
+with app.app_context():
+    db.create_all()
 
 if __name__ == "__main__":
     with app.app_context():
-        time.sleep(12)
+        time.sleep(12)  # Asegúrate de que la base de datos esté lista
         db.create_all()
         initialize_default_user()
         app.run(debug=True, host='0.0.0.0')
