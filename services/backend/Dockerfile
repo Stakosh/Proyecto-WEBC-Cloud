@@ -28,3 +28,9 @@ RUN chmod +x /app/entrypoint.sh
 
 # add app
 COPY . .
+
+# Define entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# App command
+CMD ["python", "main.py"]
