@@ -1,7 +1,6 @@
 // TeacherViewAttendance.js
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Form, Button, Table } from 'react-bootstrap';
-import axios from 'axios';
 import { useAuth } from './AuthContext';
 
 const TeacherViewAttendance = () => {
@@ -12,11 +11,12 @@ const TeacherViewAttendance = () => {
     const [attendance, setAttendance] = useState([]);
 
     useEffect(() => {
-        // Fetch all courses
+        // Fetch all courses using fetch
         const fetchCourses = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/courses');
-                setCourses(response.data);
+                const response = await fetch('http://localhost:5000/api/courses');
+                const data = await response.json();
+                setCourses(data);
             } catch (error) {
                 console.error('Error fetching courses:', error);
             }
@@ -31,8 +31,9 @@ const TeacherViewAttendance = () => {
 
         if (rut) {
             try {
-                const response = await axios.get(`http://localhost:5000/api/attendance/records?rut=${rut}&course_id=${courseId}`);
-                setAttendance(response.data);
+                const response = await fetch(`http://localhost:5000/api/attendance/records?rut=${rut}&course_id=${courseId}`);
+                const data = await response.json();
+                setAttendance(data);
             } catch (error) {
                 console.error('Error fetching attendance:', error);
             }
@@ -46,8 +47,9 @@ const TeacherViewAttendance = () => {
     const handleFetchAttendance = async () => {
         if (rut && selectedCourse) {
             try {
-                const response = await axios.get(`http://localhost:5000/api/attendance/records?rut=${rut}&course_id=${selectedCourse}`);
-                setAttendance(response.data);
+                const response = await fetch(`http://localhost:5000/api/attendance/records?rut=${rut}&course_id=${selectedCourse}`);
+                const data = await response.json();
+                setAttendance(data);
             } catch (error) {
                 console.error('Error fetching attendance:', error);
             }
