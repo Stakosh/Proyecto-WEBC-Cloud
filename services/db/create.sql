@@ -2,119 +2,116 @@
 CREATE DATABASE app_dev;
 \c app_dev;
 
-CREATE TABLE Usuarios (
-    ID SERIAL PRIMARY KEY,
-    Nombre VARCHAR(100) NOT NULL,
-    Apellido VARCHAR(100) NOT NULL,
-    Correo VARCHAR(100) UNIQUE NOT NULL,
-    Contrasena VARCHAR(255) NOT NULL,
-    Tipo_acceso VARCHAR(50) NOT NULL,
-    RUT VARCHAR(20) UNIQUE NOT NULL
-);
-
-CREATE TABLE Cursos (
-    ID SERIAL PRIMARY KEY,
-    Nombre VARCHAR(100) NOT NULL,
-    Descripcion TEXT,
-    Tipo VARCHAR(50),
-    Calendario VARCHAR(255)
-);
-
-CREATE TABLE Alumnos (
-    ID SERIAL PRIMARY KEY,
-    User_ID INT REFERENCES Usuarios(ID),
-    ID_Curso INT REFERENCES Cursos(ID)
-);
-
-CREATE TABLE Profesores (
-    ID SERIAL PRIMARY KEY,
-    User_ID INT REFERENCES Usuarios(ID),
-    Perfil TEXT
-);
-
-CREATE TABLE Administradores (
-    ID SERIAL PRIMARY KEY,
-    User_ID INT REFERENCES Usuarios(ID)
+CREATE TABLE CursoCarrera (
+    ID INT PRIMARY KEY,
+    Nombre VARCHAR(255),
+    Director VARCHAR(255),
+    Tipo VARCHAR(50)
 );
 
 CREATE TABLE Asignaturas (
-    ID SERIAL PRIMARY KEY,
-    ID_Curso INT REFERENCES Cursos(ID),
-    Nombre VARCHAR(100) NOT NULL,
+    ID INT PRIMARY KEY,
+    ID_Curso INT,
+    Nombre VARCHAR(255),
     Descripcion TEXT,
-    Calendario VARCHAR(255)
+    FOREIGN KEY (ID_Curso) REFERENCES CursoCarrera(ID)
 );
 
-CREATE TABLE Profesor_Asignatura (
-    ID SERIAL PRIMARY KEY,
-    ID_Asignatura INT REFERENCES Asignaturas(ID),
-    ID_Profesor INT REFERENCES Profesores(ID)
+CREATE TABLE Usuarios (
+    ID INT PRIMARY KEY,
+    Nombre VARCHAR(255),
+    Apellido VARCHAR(255),
+    Correo VARCHAR(255),
+    Contrasena VARCHAR(255),
+    Acceso ENUM('alumno', 'profesor', 'admin'),
+    RUT VARCHAR(20)
 );
 
-CREATE TABLE Clases (
-    ID SERIAL PRIMARY KEY,
-    ID_Asignatura INT REFERENCES Asignaturas(ID),
-    ID_Profesor INT REFERENCES Profesores(ID),
-    Nombre_clase VARCHAR(100),
-    Fecha DATE,
-    Hora_inicio TIME,
-    Hora_fin TIME,
-    Ubicacion VARCHAR(255),
-    Codigo_QR VARCHAR(255)
-);
-
-CREATE TABLE Asistencias (
-    ID SERIAL PRIMARY KEY,
-    ID_Clase INT REFERENCES Clases(ID),
-    ID_Alumno INT REFERENCES Alumnos(ID),
-    Fecha_asistencia DATE,
-    Confirmado BOOLEAN,
-    Correo VARCHAR(100)
-);
-
-CREATE TABLE Justificaciones (
-    ID SERIAL PRIMARY KEY,
-    ID_Asistencia INT REFERENCES Asistencias(ID),
-    Razon TEXT,
-    Certificado VARCHAR(255),
-    Estado VARCHAR(50),
-    Fecha_envio DATE,
-    Fecha_revision DATE
-);
-
-CREATE TABLE Recordatorios (
-    ID SERIAL PRIMARY KEY,
-    ID_Clase INT REFERENCES Clases(ID),
-    Tipo VARCHAR(50),
-    Fecha_envio DATE,
-    Mensaje TEXT,
-    Presencial BOOLEAN,
-    Online BOOLEAN
-);
-
-CREATE TABLE Preferencias_Alimentarias (
-    ID SERIAL PRIMARY KEY,
-    ID_Alumno INT REFERENCES Alumnos(ID),
+CREATE TABLE PreferAlimentarias (
+    ID_Alumno INT,
     Celiaco BOOLEAN,
     Intolerante BOOLEAN,
-    Otros TEXT
+    Otros TEXT,
+    PRIMARY KEY (ID_Alumno),
+    FOREIGN KEY (ID_Alumno) REFERENCES Usuarios(ID)
 );
 
 CREATE TABLE Encuestas (
-    ID SERIAL PRIMARY KEY,
-    ID_Curso INT REFERENCES Cursos(ID),
-    ID_Alumno INT REFERENCES Alumnos(ID),
+    ID INT PRIMARY KEY,
+    ID_Curso INT,
+    ID_Alumno INT,
     Tipo VARCHAR(50),
-    Fecha_realizacion DATE,
-    Completado BOOLEAN
+    Fecha_Realizacion DATE,
+    Completado BOOLEAN,
+    FOREIGN KEY (ID_Curso) REFERENCES CursoCarrera(ID),
+    FOREIGN KEY (ID_Alumno) REFERENCES Usuarios(ID)
 );
 
-CREATE TABLE Dashboard (
-    ID SERIAL PRIMARY KEY,
-    ID_Alimento INT REFERENCES Preferencias_Alimentarias(ID),
-    ID_Encuesta INT REFERENCES Encuestas(ID),
-    ID_Admin INT REFERENCES Administradores(ID),
-    Visualizacion TEXT,
-    Filtro_fecha DATE,
-    Filtro_curso INT
+CREATE TABLE Preguntas (
+    ID INT PRIMARY KEY,
+    ID_Encuesta INT,
+    Pregunta TEXT,
+    FOREIGN KEY (ID_Encuesta) REFERENCES Encuestas(ID)
+);
+
+CREATE TABLE Profesores (
+    ID INT PRIMARY KEY,
+    Nombre VARCHAR(255),
+    Apellido VARCHAR(255),
+    Correo VARCHAR(255),
+    RUT VARCHAR(20)
+);
+
+CREATE TABLE ProfesorAsignatura (
+    ID INT PRIMARY KEY,
+    ID_Asignatura INT,
+    ID_Profesor INT,
+    FOREIGN KEY (ID_Asignatura) REFERENCES Asignaturas(ID),
+    FOREIGN KEY (ID_Profesor) REFERENCES Profesores(ID)
+);
+
+CREATE TABLE Clases (
+    ID INT PRIMARY KEY,
+    ID_Asignatura INT,
+    ID_Profesor INT,
+    Nombre_Clase VARCHAR(255),
+    Fecha DATE,
+    Hora_Inicio TIME,
+    Hora_Fin TIME,
+    Ubicacion VARCHAR(255),
+    Codigo_QR VARCHAR(255),
+    FOREIGN KEY (ID_Asignatura) REFERENCES Asignaturas(ID),
+    FOREIGN KEY (ID_Profesor) REFERENCES Profesores(ID)
+);
+
+CREATE TABLE Asistencias (
+    ID INT PRIMARY KEY,
+    ID_Clase INT,
+    ID_Alumno INT,
+    Fecha_Asistencia DATE,
+    Confirmado BOOLEAN,
+    Correo VARCHAR(255),
+    FOREIGN KEY (ID_Clase) REFERENCES Clases(ID),
+    FOREIGN KEY (ID_Alumno) REFERENCES Usuarios(ID)
+);
+
+CREATE TABLE Recordatorios (
+    ID INT PRIMARY KEY,
+    ID_Clase INT,
+    Tipo VARCHAR(50),
+    Fecha_Envio DATE,
+    Mensaje TEXT,
+    Presencial BOOLEAN,
+    Online BOOLEAN,
+    FOREIGN KEY (ID_Clase) REFERENCES Clases(ID)
+);
+
+CREATE TABLE Justificaciones (
+    ID INT PRIMARY KEY,
+    ID_Alumno INT,
+    Certificado TEXT,
+    Estado ENUM('aprobada', 'rechazada', 'pendiente'),
+    Fecha_Envio DATE,
+    Fecha_Revision DATE,
+    FOREIGN KEY (ID_Alumno) REFERENCES Usuarios(ID)
 );
