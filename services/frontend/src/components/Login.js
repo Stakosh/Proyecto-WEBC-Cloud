@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Button, Row, Col, Form } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import ImgFondo from '../img/fondo-1.jpg';  // Ensure the image path is correct
+import ImgFondo from '../img/fondo-1.jpg';
+import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 function Login() {
     const navigate = useNavigate();
     const { t } = useTranslation("global");
+    const { login } = useAuth();
     const [formData, setFormData] = useState({ email: '', password: '' });
 
     const handleChange = (event) => {
@@ -14,15 +17,23 @@ function Login() {
         setFormData(prevState => ({ ...prevState, [name]: value }));
     };
 
-    const handleFormSubmit = (event) => {
+    const handleFormSubmit = async (event) => {
         event.preventDefault();
-        console.log('Login attempted:', formData);
+        try {
+            const response = await axios.post('http://localhost:5000/api/login', formData);
+            console.log('Login successful:', response.data);
+            
+            // Save the token (if needed)
+            localStorage.setItem('token', response.data.token);
 
-        // Check if the email and password match the specific credentials
-        if (formData.email === 'queso@queso.cl' && formData.password === 'queso') {
-            navigate('/inicio'); // Navigate to the 'inicio' route if credentials match
-        } else {
-            alert('Invalid credentials, please try again.'); // Inform the user of invalid credentials
+            // Update authentication state
+            login(response.data.user);
+
+            // Navigate to the 'inicio' route if credentials match
+            navigate('/inicio');
+        } catch (error) {
+            console.error('Login failed:', error.response?.data);
+            alert('Invalid credentials, please try again.');
         }
     };
 
@@ -63,7 +74,7 @@ function Login() {
                                 </Button>
                             </Form>
                             <div className="text-center">
-                                <Button variant="link" onClick={() => navigate('/new')}>{t('newRegister')}</Button>
+                                <Button variant="link" onClick={() => navigate('/register')}>{t('newRegister')}</Button>
                                 <Button variant="link" onClick={() => navigate('/forgot-password')}>{t('forgotPassword')}</Button>
                             </div>
                             <div className="text-center mt-3">

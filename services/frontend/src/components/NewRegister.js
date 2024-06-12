@@ -1,5 +1,3 @@
-// /new
-
 import React, { useState } from 'react';
 import { Container, Button, Row, Col, Form, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -7,12 +5,14 @@ import { useNavigate } from 'react-router-dom';
 function NewRegister() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        student_id: '',
+        rutNumber: '',
+        dv: '',
         first_name: '',
         last_name: '',
         email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        tipo_acceso: 'alumno'  // Default value for tipo_acceso
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false); // To handle success state
@@ -22,6 +22,38 @@ function NewRegister() {
         setFormData(prevState => ({ ...prevState, [name]: value }));
     };
 
+    const calculateDv = (rut) => {
+        let suma = 0;
+        let mul = 2;
+        for (let i = rut.length - 1; i >= 0; i--) {
+            suma += parseInt(rut[i]) * mul;
+            mul = mul === 7 ? 2 : mul + 1;
+        }
+        const res = 11 - (suma % 11);
+        if (res === 11) return '0';
+        if (res === 10) return 'K';
+        return res.toString();
+    };
+
+    const isValidRutFormat = (rutNumber, dv) => {
+        const rutPattern = /^[0-9]+$/;
+        const dvPattern = /^[0-9Kk]$/;
+        return rutPattern.test(rutNumber) && dvPattern.test(dv);
+    };
+
+    const validateRut = (rutNumber, dv) => {
+        if (!isValidRutFormat(rutNumber, dv)) {
+            return false;
+        }
+        return calculateDv(rutNumber) === dv.toUpperCase();
+    };
+
+    const formatRut = (rutNumber, dv) => {
+        // Split the RUT number into thousands, millions, etc.
+        const rutParts = rutNumber.replace(/\D/g, '').split(/(?=(?:\d{3})+$)/).join('.');
+        return `${rutParts}-${dv.toUpperCase()}`;
+    };
+
     const handleFormSubmit = async (event) => {
         event.preventDefault();
         if (formData.password !== formData.confirmPassword) {
@@ -29,18 +61,26 @@ function NewRegister() {
             return;
         }
 
+        if (!validateRut(formData.rutNumber, formData.dv)) {
+            setError('Invalid RUT format or incorrect verification digit.');
+            return;
+        }
+
+        const formattedRut = formatRut(formData.rutNumber, formData.dv);
+
         try {
-            const response = await fetch('http://localhost:5000/new', {
+            const response = await fetch('http://localhost:5000/api/creacion-nuevo-alumno', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    student_id: formData.student_id,
+                    rut: formattedRut,
                     first_name: formData.first_name,
                     last_name: formData.last_name,
                     email: formData.email,
-                    password: formData.password
+                    password: formData.password,
+                    tipo_acceso: formData.tipo_acceso
                 })
             });
 
@@ -61,24 +101,40 @@ function NewRegister() {
     return (
         <Container>
             <Row>
-            <Col md={6} className="offset-md-3">
+                <Col md={6} className="offset-md-3">
                     <div className="p-4 rounded shadow-lg bg-white mt-5">
                         <h2 className="text-center mb-4">Register</h2>
                         {error && <Alert variant="danger">{error}</Alert>}
                         {success && <Alert variant="success">Registration successful! Redirecting...</Alert>}
                         <Form onSubmit={handleFormSubmit}>
-                            {/* Student ID */}
-                            <Form.Group controlId="formBasicStudentId" className="mb-3">
-                                <Form.Label>Student ID</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    placeholder="Enter student ID"
-                                    name="student_id"
-                                    value={formData.student_id}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
+                            <Row>
+                                <Col>
+                                    <Form.Group controlId="formBasicRut" className="mb-3">
+                                        <Form.Label>RUT</Form.Label>
+                                        <div className="input-group">
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Enter RUT number"
+                                                name="rutNumber"
+                                                value={formData.rutNumber}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                            <div className="input-group-append">
+                                                <span className="input-group-text">-</span>
+                                            </div>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="DV"
+                                                name="dv"
+                                                value={formData.dv}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </div>
+                                    </Form.Group>
+                                </Col>
+                            </Row>
 
                             {/* First Name */}
                             <Form.Group controlId="formBasicFirstName" className="mb-3">
@@ -143,6 +199,22 @@ function NewRegister() {
                                     onChange={handleChange}
                                     required
                                 />
+                            </Form.Group>
+
+                            {/* Access Type */}
+                            <Form.Group controlId="formBasicAccessType" className="mb-3">
+                                <Form.Label>Access Type</Form.Label>
+                                <Form.Control
+                                    as="select"
+                                    name="tipo_acceso"
+                                    value={formData.tipo_acceso}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="admin">admin</option>
+                                    <option value="profesor">profesor</option>
+                                    <option value="alumno">alumno</option>
+                                </Form.Control>
                             </Form.Group>
 
                             <Button variant="primary" type="submit" className="w-100">
