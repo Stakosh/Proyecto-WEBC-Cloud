@@ -22,6 +22,17 @@ class CREDENCIAL(db.Model):
             "tipo_acceso": self.tipo_acceso
         }
 
+class Alumnos(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
+    id_curso = db.Column(db.Integer)
+
+    def to_json(self):
+        return{
+            "id": self.id,
+            "user_id": self.user_id,
+            "id_curso": self.id_curso
+        }
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
