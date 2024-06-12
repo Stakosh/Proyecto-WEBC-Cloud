@@ -5,9 +5,13 @@
   "login": "Login",
   "newRegister": "New Register",
   "forgotPassword": "I Forgot My Password",
-  "layout.link1": "Link 1",
-  "layout.link2": "Link 2",
-  "layout.link3": "Link 3",
-  "layout.link4": "Link 4"
+  "Asistencias": "Attendances",
+  "Asistencia de Estudiantes": "Student Attendance",
+  "Vista de Asistencia del Profesor": "Teacher View Attendance",
+  "Ver Asistencia": "View Attendance",
+  "Ver Mi Asistencia": "View My Attendance",
+  "Marcar Asistencia": "Mark Attendance",
+  "Próximos Cursos": "Upcoming Courses",
+  "Justificaciones": "Justifications"
 }
   

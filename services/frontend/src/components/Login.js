@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Button, Row, Col, Form } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import ImgFondo from '../img/fondo-1.jpg';  // Ensure the image path is correct
+import ImgFondo from '../img/fondo-1.jpg';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 
@@ -27,7 +27,7 @@ function Login() {
             localStorage.setItem('token', response.data.token);
 
             // Update authentication state
-            login();
+            login(response.data.user);
 
             // Navigate to the 'inicio' route if credentials match
             navigate('/inicio');
@@ -74,7 +74,7 @@ function Login() {
                                 </Button>
                             </Form>
                             <div className="text-center">
-                                <Button variant="link" onClick={() => navigate('/new')}>{t('newRegister')}</Button>
+                                <Button variant="link" onClick={() => navigate('/register')}>{t('newRegister')}</Button>
                                 <Button variant="link" onClick={() => navigate('/forgot-password')}>{t('forgotPassword')}</Button>
                             </div>
                             <div className="text-center mt-3">
