@@ -1,11 +1,11 @@
-
+version: "3.8"
 
 services:
   backend:
     build:
       context: ./services/backend
       dockerfile: Dockerfile
-    entrypoint: ["sh", "/app/entrypoint.sh"] # se asegura de ejecutar el .sh que verifica que se ejecute la base de datos 
+    entrypoint: ["sh", "/app/entrypoint.sh"]
     volumes:
       - "./services/backend:/app"
     ports:
@@ -33,13 +33,4 @@ services:
       context: ./services/frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - NODE_ENV=development
-      - REACT_APP_BACKEND_SERVICE_URL=http://localhost:5000
-    volumes:
-      - "./services/frontend:/usr/src/chat-app"
-      - "/usr/src/chat-app/node_modules"
-    depends_on:
-      - backend
+      - "80:3000"   # 🔥 Aquí corregimos para que

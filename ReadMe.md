@@ -81,4 +81,17 @@ The app will be available at [http://localhost:3000](http://localhost:3000)
 | Cony     | cony@correo.cl     | Cony     | teacher   |
 
 
+#### actualizacion 2025
 
+cambio y mejora de app
+
+se uso aws para levantar servicios en la nube
+
+[EC2 Instance]
+  ├── Contenedor Flask (backend)
+  ├── Contenedor React (frontend)
+
+[RDS PostgreSQL]
+  └── Base de datos profesional aparte
+
+#durante el feedback de la ultima entrega se nos menciono la relevancia de JAMAS poner una base de datos en un contenedor, asi que fue lo primero en mejorar

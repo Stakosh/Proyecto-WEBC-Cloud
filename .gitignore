@@ -7,3 +7,7 @@ node_modules/
 dist/
 build/
 *.log
+proyectowebc-key.pem/
+/proyectowebc-key.pem
+.proyectowebc-key.pem
+
